@@ -56,10 +56,11 @@ public class RCPSP {
             String[] parts = line.split("\\s+");
 
             int jobId = Integer.parseInt(parts[0]);
-            int numSuccessors = Integer.parseInt(parts[2]);
+            // The .SCH files in sm_j10 omit the '#modes' column compared to standard .sm files.
+            int numSuccessors = Integer.parseInt(parts[1]);
 
             for (int j = 0; j < numSuccessors; j++) {
-                int succ = Integer.parseInt(parts[3 + j]);
+                int succ = Integer.parseInt(parts[2 + j]);
                 if (succ > jobId) {
                     instance.activities[jobId].successors.add(succ);
                 }
@@ -72,10 +73,11 @@ public class RCPSP {
             String[] parts = line.split("\\s+");
 
             int jobId = Integer.parseInt(parts[0]);
-            instance.activities[jobId].duration = Integer.parseInt(parts[2]);
+            // The .SCH files in sm_j10 omit the 'mode' column compared to standard .sm files.
+            instance.activities[jobId].duration = Integer.parseInt(parts[1]);
 
             for (int k = 0; k < numResourceTypes; k++) {
-                instance.activities[jobId].resourceRequirements[k] = Integer.parseInt(parts[3 + k]);
+                instance.activities[jobId].resourceRequirements[k] = Integer.parseInt(parts[2 + k]);
             }
         }
 
@@ -131,6 +133,9 @@ public class RCPSP {
         int maxTimeHorizon = 0;
         for (int i = 0; i < totalJobs; i++) {
             maxTimeHorizon += instance.activities[i].duration;
+            for (int k = 0; k < instance.numResourceTypes; k++) {
+                instance.resourceCapacities[k] = Math.max(instance.resourceCapacities[k], instance.activities[i].resourceRequirements[k]);
+            }
         }
 
         int[][] resourceProfile = new int[maxTimeHorizon][instance.numResourceTypes];
@@ -212,6 +217,7 @@ public class RCPSP {
 
             } catch (Exception e) {
                 System.out.println("Failed to process file: " + file.getName());
+                e.printStackTrace();
             }
         }
 
