@@ -182,46 +182,58 @@ public class RCPSP {
     }
 
     public static void main(String[] args) {
-        String folderPath = "sm_j10";
-        File folder = new File(folderPath);
+        String[] folderPaths = {"sm_j10", "sm_j20"};
+        int totalSuccessCount = 0;
+        long overallExecutionTime = 0;
 
-        if (!folder.exists() || !folder.isDirectory()) {
-            System.out.println("Directory '" + folderPath + "' not found.");
-            return;
-        }
+        for (String folderPath : folderPaths) {
+            System.out.println("Processing folder: " + folderPath);
+            File folder = new File(folderPath);
 
-        File[] listOfFiles = folder.listFiles((dir, name) -> name.toUpperCase().endsWith(".SCH"));
-
-        if (listOfFiles == null || listOfFiles.length == 0) {
-            System.out.println("No .SCH files found in the directory.");
-            return;
-        }
-
-        int successCount = 0;
-        long totalExecutionTime = 0;
-
-        for (File file : listOfFiles) {
-            try {
-                long startTime = System.currentTimeMillis();
-
-                ProjectInstance instance = parsePSPLIB(file.getAbsolutePath());
-                int[] schedule = scheduleProject(instance);
-                int makespan = schedule[instance.numActivities + 1];
-
-                long endTime = System.currentTimeMillis();
-                long duration = endTime - startTime;
-                totalExecutionTime += duration;
-
-                System.out.println(String.format("File: %-12s | Makespan: %-5d | Time: %d ms", file.getName(), makespan, duration));
-                successCount++;
-
-            } catch (Exception e) {
-                System.out.println("Failed to process file: " + file.getName());
-                e.printStackTrace();
+            if (!folder.exists() || !folder.isDirectory()) {
+                System.out.println("Directory '" + folderPath + "' not found.");
+                continue;
             }
+
+            File[] listOfFiles = folder.listFiles((dir, name) -> name.toUpperCase().endsWith(".SCH"));
+
+            if (listOfFiles == null || listOfFiles.length == 0) {
+                System.out.println("No .SCH files found in the directory '" + folderPath + "'.");
+                continue;
+            }
+
+            int successCount = 0;
+            long totalExecutionTime = 0;
+
+            for (File file : listOfFiles) {
+                try {
+                    long startTime = System.currentTimeMillis();
+
+                    ProjectInstance instance = parsePSPLIB(file.getAbsolutePath());
+                    int[] schedule = scheduleProject(instance);
+                    int makespan = schedule[instance.numActivities + 1];
+
+                    long endTime = System.currentTimeMillis();
+                    long duration = endTime - startTime;
+                    totalExecutionTime += duration;
+
+                    System.out.println(String.format("File: %-12s | Makespan: %-5d | Time: %d ms", file.getName(), makespan, duration));
+                    successCount++;
+
+                } catch (Exception e) {
+                    System.out.println("Failed to process file: " + file.getName());
+                    e.printStackTrace();
+                }
+            }
+
+            System.out.println("Successfully processed " + successCount + " files in " + folderPath);
+            System.out.println("Execution time for " + folderPath + ": " + totalExecutionTime + " ms\n");
+            
+            totalSuccessCount += successCount;
+            overallExecutionTime += totalExecutionTime;
         }
 
-        System.out.println("Successfully processed " + successCount + " files.");
-        System.out.println("Total execution time: " + totalExecutionTime + " ms");
+        System.out.println("Overall successfully processed " + totalSuccessCount + " files.");
+        System.out.println("Overall execution time: " + overallExecutionTime + " ms");
     }
 }
